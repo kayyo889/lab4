@@ -1,0 +1,11 @@
+*
+!package.json
+!package-lock.json
+!src/
+!src/**
+!public/
+!public/**
+!migrations/
+!migrations/**
+!knexfile.js
+!Dockerfile

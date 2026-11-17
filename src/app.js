@@ -19,6 +19,10 @@ const errorHandler = require('./middleware/errorHandler');
 function createApp() {
   const app = express();
 
+  app.use((_req, res, next) => {
+    res.set('X-Instance-ID', process.env.INSTANCE_ID || require('node:os').hostname());
+    next();
+  });
   app.use(express.json());
 
   // Опознаём пользователя до маршрутов — дальше он доступен как req.user.

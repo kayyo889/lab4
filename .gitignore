@@ -25,3 +25,7 @@ Thumbs.db
 
 # инструкции
 tasks/
+
+backups/
+*.dump
+__pycache__/

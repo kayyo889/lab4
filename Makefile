@@ -108,3 +108,22 @@ verify: lint test
 
 #container-check:
 #	docker compose ps
+
+.PHONY: container-check container-up container-down container-backup container-restore
+container-check:
+	python3 scripts/container-check.py
+
+# Gate deployment on an isolated integration check of the current working tree.
+container-up: container-check
+	python3 scripts/container-check.py --policy-only
+	docker compose build
+	docker compose up -d --wait
+
+container-down:
+	docker compose down
+
+container-backup:
+	sh scripts/db-backup.sh
+
+container-restore:
+	sh scripts/db-restore.sh "$(BACKUP)" "$(RESTORE_PROJECT)"
