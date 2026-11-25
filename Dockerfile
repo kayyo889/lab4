@@ -10,7 +10,7 @@ COPY --from=dependencies --chown=1000:1000 /app/node_modules ./node_modules
 COPY --chown=1000:1000 . .
 ARG APP_REVISION=dev
 LABEL org.opencontainers.image.revision=$APP_REVISION
-ENV NODE_ENV=production PORT=3000
+ENV NODE_ENV=production PORT=3000 APP_REVISION=$APP_REVISION
 USER 1000:1000
 HEALTHCHECK --interval=5s --timeout=3s --start-period=15s --retries=12 CMD node -e "fetch('http://127.0.0.1:3000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 STOPSIGNAL SIGTERM

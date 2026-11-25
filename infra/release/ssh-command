@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command=${SSH_ORIGINAL_COMMAND:-}
+if [[ $command =~ ^deploy\ ([a-f0-9]{40})$ ]]; then
+  exec sudo -n /usr/local/sbin/music-store-release deploy "${BASH_REMATCH[1]}"
+elif [[ $command == rollback ]]; then
+  exec sudo -n /usr/local/sbin/music-store-release rollback
+fi
+echo 'Only deploy SHA and rollback are supported' >&2
+exit 2

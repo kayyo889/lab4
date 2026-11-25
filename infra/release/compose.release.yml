@@ -1,0 +1,9 @@
+x-release-image: &release-image '${REGISTRY_IMAGE:?Set REGISTRY_IMAGE}:${RELEASE_TAG:?Specify a release commit SHA}'
+services:
+  migrate:
+    image: *release-image
+    build: !reset null
+  app1:
+    image: *release-image
+  app2:
+    image: *release-image

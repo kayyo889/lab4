@@ -1,0 +1,1 @@
+music-deploy ALL=(root) NOPASSWD: /usr/local/sbin/music-store-release deploy *, /usr/local/sbin/music-store-release rollback
