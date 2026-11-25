@@ -1,0 +1,85 @@
+- name: Install operating system dependencies
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - openssh-server
+      - python3-debian
+      - sudo
+      - ufw
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Configure the signed Docker package repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    uris: '{{ docker_apt_url }}'
+    suites: [noble]
+    components: [stable]
+    signed_by: '{{ docker_apt_url }}/gpg'
+  register: docker_repository
+
+- name: Install Docker Engine and Compose
+  ansible.builtin.apt:
+    name:
+      - containerd.io
+      - docker-ce
+      - docker-ce-cli
+      - docker-compose-plugin
+    state: present
+    update_cache: '{{ docker_repository.changed }}'
+    cache_valid_time: '{{ omit if docker_repository.changed else 3600 }}'
+
+- name: Enable Docker
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Ensure the SSH service is running
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: started
+
+- name: Create dedicated deployment account without Docker or admin groups
+  ansible.builtin.user:
+    name: '{{ music_deploy_user }}'
+    shell: /bin/bash
+    groups: ''
+    append: false
+    create_home: true
+    password_lock: true
+
+- name: Install the restricted deployment public key
+  ansible.posix.authorized_key:
+    user: '{{ music_deploy_user }}'
+    key: '{{ deploy_public_key }}'
+    exclusive: true
+    key_options: restrict
+    state: present
+
+- name: Restrict SSH for the deployment account
+  ansible.builtin.template:
+    src: music-deploy.conf.j2
+    dest: /etc/ssh/sshd_config.d/60-music-deploy.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload SSH
+
+- name: Allow SSH from the management network before enabling UFW
+  community.general.ufw:
+    rule: allow
+    from_ip: '{{ management_cidr }}'
+    port: '{{ ansible_port | default(22) | string }}'
+    proto: tcp
+
+- name: Deny incoming traffic by default
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled

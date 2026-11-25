@@ -1,0 +1,56 @@
+name: Staging infrastructure
+on:
+  workflow_call:
+    inputs:
+      release_sha:
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    environment: staging
+    concurrency:
+      group: music-store-staging
+      cancel-in-progress: false
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: infra/ansible
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install and check Ansible
+        run: |
+          python3 -m venv "$RUNNER_TEMP/infra-venv"
+          source "$RUNNER_TEMP/infra-venv/bin/activate"
+          sh check.sh
+      - name: Configure staging and verify the release
+        env:
+          MUSIC_ANSIBLE_HOST: ${{ vars.STAGING_HOST }}
+          MUSIC_ANSIBLE_PORT: ${{ vars.STAGING_PORT }}
+          MUSIC_ANSIBLE_USER: ${{ vars.INFRA_USER }}
+          MUSIC_MANAGEMENT_CIDR: ${{ vars.INFRA_MANAGEMENT_CIDR }}
+          MUSIC_DB_PASSWORD: ${{ secrets.INFRA_DB_PASSWORD }}
+          MUSIC_DEPLOY_PUBLIC_KEY: ${{ vars.STAGING_DEPLOY_PUBLIC_KEY }}
+          MUSIC_RELEASE_SHA: ${{ inputs.release_sha }}
+          MUSIC_REGISTRY_USER: ${{ vars.INFRA_REGISTRY_USER }}
+          MUSIC_REGISTRY_TOKEN: ${{ secrets.INFRA_REGISTRY_TOKEN }}
+          INFRA_SSH_KEY: ${{ secrets.INFRA_SSH_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          : "${MUSIC_ANSIBLE_HOST:?}" "${MUSIC_ANSIBLE_USER:?}" "${INFRA_SSH_KEY:?}" "${STAGING_KNOWN_HOSTS:?}"
+          source "$RUNNER_TEMP/infra-venv/bin/activate"
+          umask 077
+          ssh_dir=$(mktemp -d)
+          trap 'rm -rf "$ssh_dir"' EXIT
+          printf '%s\n' "$INFRA_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          unset INFRA_SSH_KEY
+          export ANSIBLE_SSH_COMMON_ARGS="-o UserKnownHostsFile=$ssh_dir/known_hosts -o IdentitiesOnly=yes"
+          ansible-playbook -i inventories/staging/hosts.yml --private-key "$ssh_dir/key" \
+            -e '{"music_store_update_release":true}' site.yml

@@ -1,0 +1,30 @@
+- name: Configure a Music Store server
+  hosts: all
+  become: true
+  vars:
+    management_cidr: "{{ lookup('ansible.builtin.env', 'MUSIC_MANAGEMENT_CIDR', default='') }}"
+    deploy_public_key: "{{ lookup('ansible.builtin.env', 'MUSIC_DEPLOY_PUBLIC_KEY', default='') }}"
+    music_store_db_password: "{{ lookup('ansible.builtin.env', 'MUSIC_DB_PASSWORD', default='') }}"
+    music_store_initial_sha: "{{ lookup('ansible.builtin.env', 'MUSIC_RELEASE_SHA', default='') }}"
+    music_store_registry_user: "{{ lookup('ansible.builtin.env', 'MUSIC_REGISTRY_USER', default='') }}"
+    music_store_registry_token: "{{ lookup('ansible.builtin.env', 'MUSIC_REGISTRY_TOKEN', default='') }}"
+    # A release request is explicit. For routine reconciliation keep this false.
+    music_store_update_release: false
+  pre_tasks:
+    - name: Check target platform and management settings
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == 'Ubuntu'
+          - ansible_distribution_version == '24.04'
+          - management_cidr is match('^[0-9a-fA-F:.]+/[0-9]{1,3}$')
+          - deploy_public_key is match('^ssh-ed25519 [A-Za-z0-9+/=]+( .*)?$')
+          - music_store_http_bind == '127.0.0.1'
+    - name: Check secret inputs before making changes
+      ansible.builtin.assert:
+        that:
+          - music_store_db_password is match('^[0-9A-Fa-f]{48,128}$')
+          - (music_store_registry_user | length == 0) == (music_store_registry_token | length == 0)
+      no_log: true
+  roles:
+    - host
+    - music_store

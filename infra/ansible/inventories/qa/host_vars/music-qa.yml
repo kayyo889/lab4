@@ -1,0 +1,3 @@
+ansible_host: "{{ lookup('ansible.builtin.env', 'MUSIC_ANSIBLE_HOST', default='qa.example.invalid') }}"
+ansible_user: "{{ lookup('ansible.builtin.env', 'MUSIC_ANSIBLE_USER', default='ubuntu') }}"
+ansible_port: "{{ lookup('ansible.builtin.env', 'MUSIC_ANSIBLE_PORT', default='') | default(22, true) | int }}"
