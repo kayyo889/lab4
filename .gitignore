@@ -29,3 +29,6 @@ tasks/
 backups/
 *.dump
 __pycache__/
+
+.ci-cache/
+reports/

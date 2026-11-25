@@ -1,4 +1,4 @@
-.PHONY: help setup deploy start stop restart status migrate rollback test lint verify
+.PHONY: help setup deploy start stop restart status migrate rollback test lint quality verify db-check
 
 
 help:
@@ -44,12 +44,15 @@ rollback:
 	npx knex migrate:rollback
 
 test:
-	npm test
+	npm test $(TEST_ARGS)
 
 lint:
-	npx eslint .
+	npm run lint -- $(LINT_ARGS)
 
-verify: lint test
+quality: lint
+	npm run format:check
+
+verify: quality test
 	@echo "все проверки пройдены"
 
 
@@ -127,3 +130,7 @@ container-backup:
 
 container-restore:
 	sh scripts/db-restore.sh "$(BACKUP)" "$(RESTORE_PROJECT)"
+
+# Проверка миграций и восстановления в отдельных одноразовых БД.
+db-check:
+	sh scripts/ci/db-check.sh

@@ -1,0 +1,89 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  checks:
+    name: DinD checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: .ci-cache/npm
+          key: npm-linux-node22-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-linux-node22-
+      - name: Start isolated Docker daemon
+        run: bash scripts/ci/dind.sh start
+      - name: Install locked dependencies
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh install
+      - name: Style and static analysis
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh quality 2>&1 | tee reports/quality.log
+      - name: Tests
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh test
+      - name: Migrations, backup and restore in disposable databases
+        run: bash scripts/ci/dind.sh exec make db-check 2>&1 | tee reports/db.log
+      - name: Secret and dependency scan
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh security
+      - name: Container integration
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh container 2>&1 | tee reports/container.log
+      - name: Build by commit SHA
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh build "$GITHUB_SHA"
+      - name: Image vulnerability scan
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh scan "$GITHUB_SHA"
+      - name: Local registry roundtrip
+        run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh registry "$GITHUB_SHA"
+      - name: Seal checked image
+        if: github.event_name == 'push'
+        run: bash scripts/ci/dind.sh exec docker save --output /work/reports/image.tar "music-store:$GITHUB_SHA"
+      - name: Upload check reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-reports
+          path: |
+            reports/*.json
+            reports/*.log
+          if-no-files-found: ignore
+      - name: Upload checked image
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: checked-image
+          path: reports/image.tar
+          if-no-files-found: error
+          retention-days: 3
+      - name: Stop isolated Docker daemon
+        if: always()
+        run: bash scripts/ci/dind.sh stop
+
+  publish:
+    name: Publish scanned image
+    needs: checks
+    if: github.event_name == 'push' && contains(fromJSON('["refs/heads/main","refs/heads/л5","refs/heads/л6","refs/heads/л7"]'), github.ref)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: checked-image
+      - name: Publish to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker load --input image.tar
+          docker tag "music-store:$GITHUB_SHA" "$image"
+          docker push "$image"

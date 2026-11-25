@@ -1,0 +1,15 @@
+/.github/ @kayyo889
+/tests/ @kayyo889
+/Makefile @kayyo889
+/eslint.config.js @kayyo889
+/jest.config.js @kayyo889
+/.prettierrc.json @kayyo889
+/.prettierignore @kayyo889
+/.gitleaks.toml @kayyo889
+/package*.json @kayyo889
+/scripts/ @kayyo889
+/migrations/ @kayyo889
+/Dockerfile @kayyo889
+/.dockerignore @kayyo889
+/docker-compose.yml @kayyo889
+/infra/ @kayyo889

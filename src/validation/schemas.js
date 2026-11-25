@@ -28,8 +28,10 @@ const numeric = (field, refine = (schema) => schema) =>
     toNumber,
     refine(
       z.number({
-        required_error: `Поле «${field}» обязательно`,
-        invalid_type_error: `Поле «${field}» должно быть числом`,
+        error: (issue) =>
+          issue.input === undefined
+            ? `Поле «${field}» обязательно`
+            : `Поле «${field}» должно быть числом`,
       }),
     ),
   );
@@ -45,8 +47,10 @@ const positiveInt = (field) =>
 const text = (field, max) =>
   z
     .string({
-      required_error: `Поле «${field}» обязательно`,
-      invalid_type_error: `Поле «${field}» должно быть строкой`,
+      error: (issue) =>
+        issue.input === undefined
+          ? `Поле «${field}» обязательно`
+          : `Поле «${field}» должно быть строкой`,
     })
     .trim()
     .min(1, `Поле «${field}» не может быть пустым`)
@@ -104,8 +108,8 @@ const receiptCreate = z.object({ quantity: positiveInt('quantity') });
 const credentials = z.object({
   login: z
     .string({
-      required_error: 'Поле «login» обязательно',
-      invalid_type_error: 'Поле «login» должно быть строкой',
+      error: (issue) =>
+        issue.input === undefined ? 'Поле «login» обязательно' : 'Поле «login» должно быть строкой',
     })
     .trim()
     .min(3, 'Логин короче трёх символов')
@@ -114,15 +118,17 @@ const credentials = z.object({
   // Пароль намеренно не обрезаем: пробелы по краям могут быть его частью.
   password: z
     .string({
-      required_error: 'Поле «password» обязательно',
-      invalid_type_error: 'Поле «password» должно быть строкой',
+      error: (issue) =>
+        issue.input === undefined
+          ? 'Поле «password» обязательно'
+          : 'Поле «password» должно быть строкой',
     })
     .min(8, 'Пароль короче восьми символов')
     .max(200, 'Пароль длиннее 200 символов'),
 });
 
 const roleField = z.enum(ROLES, {
-  errorMap: () => ({ message: `Роль должна быть одной из: ${ROLES.join(', ')}` }),
+  error: `Роль должна быть одной из: ${ROLES.join(', ')}`,
 });
 
 const userCreate = credentials.extend({ role: roleField.default(DEFAULT_ROLE) });

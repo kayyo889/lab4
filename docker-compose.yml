@@ -1,7 +1,7 @@
 name: music-store
 x-app: &app
   image: music-store:${APP_TAG:-local}
-  user: "1000:1000"
+  user: '1000:1000'
   init: true
   restart: unless-stopped
   read_only: true
@@ -14,9 +14,9 @@ x-app: &app
   stop_grace_period: 20s
   environment: &app-env
     NODE_ENV: production
-    PORT: "3000"
+    PORT: '3000'
     DB_HOST: db
-    DB_PORT: "5432"
+    DB_PORT: '5432'
     DB_USER: ${DB_USER:-music_store}
     DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     DB_NAME: ${DB_NAME:-music_store}
@@ -28,8 +28,8 @@ x-app: &app
       condition: service_completed_successfully
 services:
   db:
-    image: postgres:16.9-alpine3.22@sha256:7c688148e5e156d0e86df7ba8ae5a05a2386aaec1e2ad8e6d11bdf10504b1fb7
-    user: "70:70"
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
+    user: '70:70'
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-music_store}
@@ -53,7 +53,7 @@ services:
       context: .
       args:
         APP_REVISION: ${APP_REVISION:-dev}
-    restart: "no"
+    restart: 'no'
     command: [node, node_modules/knex/bin/cli.js, migrate:latest]
     depends_on:
       db:
@@ -69,8 +69,8 @@ services:
       <<: *app-env
       INSTANCE_ID: app2
   nginx:
-    image: nginxinc/nginx-unprivileged:1.28.0-alpine@sha256:c97ff0bf7cbae369953c6da1232ec14ad9f971d66360c5698db0856a4cd657a0
-    user: "101:101"
+    image: nginxinc/nginx-unprivileged:stable-alpine@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03
+    user: '101:101'
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
