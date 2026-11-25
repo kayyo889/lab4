@@ -1,0 +1,6 @@
+Match User {{ music_deploy_user }}
+    AuthenticationMethods publickey
+    DisableForwarding yes
+    PermitTTY no
+    ForceCommand /usr/local/sbin/music-store-ssh
+Match all

@@ -134,3 +134,7 @@ container-restore:
 # Проверка миграций и восстановления в отдельных одноразовых БД.
 db-check:
 	sh scripts/ci/db-check.sh
+
+.PHONY: infra-check
+infra-check:
+	cd infra/ansible && sh check.sh

@@ -7,3 +7,6 @@ services:
     image: *release-image
   app2:
     image: *release-image
+  nginx:
+    environment:
+      NGINX_CONFIG_SHA: '${NGINX_CONFIG_SHA:-unmanaged}'

@@ -3,6 +3,6 @@ coverage/
 package-lock.json
 
 # исходные материалы курса - не форматируем
-tasks/
+/tasks/
 .ci-cache/
 reports/

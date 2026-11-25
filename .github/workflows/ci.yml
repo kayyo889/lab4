@@ -35,6 +35,8 @@ jobs:
         run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh security
       - name: Container integration
         run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh container 2>&1 | tee reports/container.log
+      - name: Infrastructure syntax and inventory
+        run: bash scripts/ci/dind.sh exec docker run --rm -v /work:/work -w /work/infra/ansible python:3.12-slim sh check.sh
       - name: Build by commit SHA
         run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh build "$GITHUB_SHA"
       - name: Image vulnerability scan
@@ -91,7 +93,7 @@ jobs:
   deploy-staging:
     name: Deploy verified release to staging
     needs: publish
-    if: vars.STAGING_SSH_ENABLED == 'true' && contains(fromJSON('["refs/heads/л6","refs/heads/л7"]'), github.ref)
+    if: vars.STAGING_SSH_ENABLED == 'true' && !(vars.INFRA_ENABLED == 'true' && github.ref == 'refs/heads/л7') && contains(fromJSON('["refs/heads/л6","refs/heads/л7"]'), github.ref)
     runs-on: ubuntu-24.04
     environment: staging
     concurrency:
@@ -127,3 +129,12 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/release-demo.sh
+
+  provision-staging:
+    name: Reconcile infrastructure and deploy verified image
+    needs: verify-release
+    if: vars.INFRA_ENABLED == 'true' && github.ref == 'refs/heads/л7'
+    uses: ./.github/workflows/infra.yml
+    with:
+      release_sha: ${{ github.sha }}
+    secrets: inherit

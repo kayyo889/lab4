@@ -1,0 +1,15 @@
+[Unit]
+Description=Restore and verify the accepted Music Store release
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists={{ music_store_root }}/.release-state
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/music-store-release reconcile
+TimeoutStartSec=12min
+
+[Install]
+WantedBy=multi-user.target

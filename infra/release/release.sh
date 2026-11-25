@@ -6,6 +6,8 @@ cd /opt/music-store
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export DOCKER_CONFIG=/root/.docker
 unset DOCKER_HOST DOCKER_CONTEXT COMPOSE_FILE COMPOSE_PROJECT_NAME
+nginx_hash=$(sha256sum infra/nginx/default.conf)
+export NGINX_CONFIG_SHA=${nginx_hash%% *}
 
 valid_sha() { [[ $1 =~ ^[0-9a-f]{40}$ ]]; }
 usage() { echo 'Usage: music-store-release deploy SHA | rollback | reconcile' >&2; exit 2; }

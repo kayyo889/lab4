@@ -1,0 +1,6 @@
+music_store_root: /opt/music-store
+music_deploy_user: music-deploy
+music_store_registry_image: ghcr.io/kayyo889/lab4
+music_store_db_user: music_store
+music_store_http_bind: 127.0.0.1
+docker_apt_url: https://download.docker.com/linux/ubuntu
