@@ -44,7 +44,7 @@ rollback:
 	npx knex migrate:rollback
 
 test:
-	npm test $(TEST_ARGS)
+	npm test -- $(TEST_ARGS)
 
 lint:
 	npm run lint -- $(LINT_ARGS)
