@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,8 +92,8 @@ try:
     endpoint = compose("port", "nginx", "8080", capture=True)
     url = "http://" + endpoint + "/health/ready"
 
-    def request():
-        with urllib.request.urlopen(url, timeout=20) as response:
+    def request(timeout=20):
+        with urllib.request.urlopen(url, timeout=timeout) as response:
             assert response.status == 200
             return response.headers["X-Instance-ID"]
 
@@ -121,7 +122,18 @@ try:
     assert stopped["State"]["ExitCode"] == 0 and not stopped["State"]["OOMKilled"]
     assert time.monotonic() - started < 20
     assert "SIGTERM" in compose("logs", "app1", capture=True)
-    assert {request() for _ in range(12)} == {"app2"}, "Failover failed"
+    # The Docker DNS entry for the stopped container can linger until Nginx refreshes it.
+    deadline = time.monotonic() + 12
+    while True:
+        try:
+            if {request(timeout=3) for _ in range(12)} == {"app2"}:
+                break
+        except (OSError, urllib.error.URLError):
+            if time.monotonic() >= deadline:
+                raise
+        if time.monotonic() >= deadline:
+            raise AssertionError("Failover did not converge within 12 seconds")
+        time.sleep(0.5)
     migration_count = sql("SELECT count(*) FROM knex_migrations")
     with tempfile.TemporaryFile() as dump:
         compose("exec", "-T", "db", "pg_dump", "-U", "check", "-d", "check", "-Fc",
