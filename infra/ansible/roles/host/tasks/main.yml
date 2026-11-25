@@ -36,6 +36,11 @@
     enabled: true
     state: started
 
+- name: Ensure the SSH service is running
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: started
+
 - name: Create dedicated deployment account without Docker or admin groups
   ansible.builtin.user:
     name: '{{ music_deploy_user }}'

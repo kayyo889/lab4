@@ -138,3 +138,28 @@ jobs:
     with:
       release_sha: ${{ github.sha }}
     secrets: inherit
+
+  verify-infrastructure:
+    name: Exercise Ansible convergence on disposable Ubuntu
+    needs: publish
+    if: github.ref == 'refs/heads/л7'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: infra/ansible
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify host configuration, idempotence and drift repair
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/infra-demo-venv"
+          source "$RUNNER_TEMP/infra-demo-venv/bin/activate"
+          sh check.sh
+          bash demo.sh

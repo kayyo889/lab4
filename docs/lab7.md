@@ -18,6 +18,8 @@ ansible-playbook -i inventories/staging/hosts.yml --private-key PATH_TO_ADMIN_KE
 
 Для удалённого сервера GitHub задайте repository variable `INFRA_ENABLED=true` и параметры окружения `staging`. Нужны переменные `STAGING_HOST`, `INFRA_USER`, `INFRA_MANAGEMENT_CIDR`, `STAGING_DEPLOY_PUBLIC_KEY`, при необходимости `STAGING_PORT` и `INFRA_REGISTRY_USER`. Секреты `INFRA_SSH_KEY`, `INFRA_DB_PASSWORD`, `STAGING_KNOWN_HOSTS` и для частного GHCR `INFRA_REGISTRY_TOKEN`. У runner должен быть доступ в управляющую сеть. Процесс CD передаёт Ansible SHA проверенного и опубликованного образа.
 
+На `л7` задача `Exercise Ansible convergence on disposable Ubuntu` применяет QA-конфигурацию в отдельной Ubuntu VM GitHub Actions. Она повторяет запуск, требует `changed=0`, исправляет временно ослабленные права управляемого файла и проверяет, что SSH-аккаунт выпуска отклоняет постороннюю команду.
+
 ## Демонстрация на защите
 
 1. Выполните playbook на чистой машине и покажите `PLAY RECAP`, Docker, статус UFW, `/health/ready` и `/version`. По SSH на staging доступ к HTTP можно перенаправить через административную учётную запись.
