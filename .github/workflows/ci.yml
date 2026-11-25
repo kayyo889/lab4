@@ -45,7 +45,7 @@ jobs:
         run: bash scripts/ci/dind.sh exec sh scripts/ci/check.sh registry "$GITHUB_SHA"
       - name: Seal checked image
         if: github.event_name == 'push'
-        run: bash scripts/ci/dind.sh exec docker save --output /work/reports/image.tar "music-store:$GITHUB_SHA"
+        run: bash scripts/ci/dind.sh exec docker save "music-store:$GITHUB_SHA" > reports/image.tar
       - name: Upload check reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
