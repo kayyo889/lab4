@@ -30,6 +30,10 @@ function createApp() {
 
   app.use('/api', rootRouter);
   app.use('/health', healthRouter);
+  app.get('/version', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ revision: process.env.APP_REVISION || 'dev' });
+  });
   app.use('/auth', authRouter);
 
   // Страница интерфейса, стили и скрипт отдаются без входа: иначе форма

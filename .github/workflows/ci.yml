@@ -87,3 +87,43 @@ jobs:
           docker load --input image.tar
           docker tag "music-store:$GITHUB_SHA" "$image"
           docker push "$image"
+
+  deploy-staging:
+    name: Deploy verified release to staging
+    needs: publish
+    if: vars.STAGING_SSH_ENABLED == 'true' && contains(fromJSON('["refs/heads/л6","refs/heads/л7"]'), github.ref)
+    runs-on: ubuntu-24.04
+    environment: staging
+    concurrency:
+      group: music-store-staging
+      cancel-in-progress: false
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Deploy over SSH and verify the running release
+        env:
+          STAGING_HOST: ${{ vars.STAGING_HOST }}
+          STAGING_PORT: ${{ vars.STAGING_PORT }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: bash scripts/ci/deploy-ssh.sh "$GITHUB_SHA"
+
+  verify-release:
+    name: Exercise deployment and rollback in disposable staging
+    needs: publish
+    if: contains(fromJSON('["refs/heads/л6","refs/heads/л7"]'), github.ref)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify GHCR release and simulate a broken release
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/release-demo.sh
