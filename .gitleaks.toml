@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated dependencies and scanner output"
+paths = ['''(^|/)(node_modules|\.git|\.ci-cache|reports)/''']

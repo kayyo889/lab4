@@ -23,74 +23,80 @@
 Таблицы:
 
 Жанры (genres)
-Поле | Тип данных | Примечания
------|------------|------------
-id   | SERIAL        | PRIMARY KEY
-name | VARCHAR    | UNIQUE, NOT NULL
-created_at | TIMESTAMPTZ |
-updated_at | TIMESTAMPTZ | 
+
+| Поле       | Тип данных  | Примечания       |
+| ---------- | ----------- | ---------------- |
+| id         | SERIAL      | PRIMARY KEY      |
+| name       | VARCHAR     | UNIQUE, NOT NULL |
+| created_at | TIMESTAMPTZ |
+| updated_at | TIMESTAMPTZ |
 
 Музыканты (musicians)
-Поле | Тип данных | Примечания
------|------------|------------
-id   | SERIAL     | PRIMARY KEY
-name | VARCHAR    | NOT NULL
-country | VARCHAR | 
-notes | TEXT |
-updated_at | TIMESTAMPTZ |
-created_at | TIMESTAMPTZ |
-archived_at | TIMESTAMPTZ |
+
+| Поле        | Тип данных  | Примечания  |
+| ----------- | ----------- | ----------- |
+| id          | SERIAL      | PRIMARY KEY |
+| name        | VARCHAR     | NOT NULL    |
+| country     | VARCHAR     |
+| notes       | TEXT        |
+| updated_at  | TIMESTAMPTZ |
+| created_at  | TIMESTAMPTZ |
+| archived_at | TIMESTAMPTZ |
 
 Пластинки (records)
-Поле | Тип данных | Примечания
------|------------|------------
-id   | SERIAL     | PRIMARY KEY
-title | VARCHAR    | NOT NULL
-musician_id |    INT | FOREIGN KEY
-genre_id | INT | FOREIGN KEY
-year | INT | >1900, <=2026
-price | NUMERIC | > 0
-stock | INT | >= 0
-updated_at | TIMESTAMPTZ |
-created_at | TIMESTAMPTZ | 
-archived_at | TIMESTAMPTZ |
+
+| Поле        | Тип данных  | Примечания    |
+| ----------- | ----------- | ------------- |
+| id          | SERIAL      | PRIMARY KEY   |
+| title       | VARCHAR     | NOT NULL      |
+| musician_id | INT         | FOREIGN KEY   |
+| genre_id    | INT         | FOREIGN KEY   |
+| year        | INT         | >1900, <=2026 |
+| price       | NUMERIC     | > 0           |
+| stock       | INT         | >= 0          |
+| updated_at  | TIMESTAMPTZ |
+| created_at  | TIMESTAMPTZ |
+| archived_at | TIMESTAMPTZ |
 
 Поступления (receipts)
-Поле | Тип данных | Примечания
------|------------|------------
-id   | SERIAL     | PRIMARY KEY, AUTOINCREMENT
-record_id | INT | FOREIGN KEY
-quantity | INT | > 0
-created_at | TIMESTAMPTZ |
+
+| Поле       | Тип данных  | Примечания                 |
+| ---------- | ----------- | -------------------------- |
+| id         | SERIAL      | PRIMARY KEY, AUTOINCREMENT |
+| record_id  | INT         | FOREIGN KEY                |
+| quantity   | INT         | > 0                        |
+| created_at | TIMESTAMPTZ |
 
 Продажи (sales)
-Поле | Тип данных | Примечания
------|------------|------------
-id   | SERIAL     | PRIMARY KEY, AUTOINCREMENT
-record_id | INT | FOREIGN KEY
-quantity | INT | > 0
-unit_price | NUMERIC | 
-total | NUMERIC | quantity * unit_price
-created_at | TIMESTAMPTZ | NOT NULL
+
+| Поле       | Тип данных  | Примечания                 |
+| ---------- | ----------- | -------------------------- |
+| id         | SERIAL      | PRIMARY KEY, AUTOINCREMENT |
+| record_id  | INT         | FOREIGN KEY                |
+| quantity   | INT         | > 0                        |
+| unit_price | NUMERIC     |
+| total      | NUMERIC     | quantity * unit_price      |
+| created_at | TIMESTAMPTZ | NOT NULL                   |
 
 Пользователи (users)
-Поле | Тип данных | Примечания
------|------------|------------
-id   | SERIAL     | PRIMARY KEY
-login| VARCHAR | 
-password_hash | TEXT |
-role | VARCHAR | 
-updated_at | TIMESTAMPTZ |
-created_at | TIMESTAMPTZ | 
 
+| Поле          | Тип данных  | Примечания  |
+| ------------- | ----------- | ----------- |
+| id            | SERIAL      | PRIMARY KEY |
+| login         | VARCHAR     |
+| password_hash | TEXT        |
+| role          | VARCHAR     |
+| updated_at    | TIMESTAMPTZ |
+| created_at    | TIMESTAMPTZ |
 
 Сессии (sessions)
-Поле | Тип данных | Примечания
------|------------|------------
-token_hash   | VARCHAR     | PRIMARY KEY
-user_id | INT | FOREIGN KEY
-created_at | TIMESTAMPTZ |
-expires_at | TIMESTAMPTZ |
+
+| Поле       | Тип данных  | Примечания  |
+| ---------- | ----------- | ----------- |
+| token_hash | VARCHAR     | PRIMARY KEY |
+| user_id    | INT         | FOREIGN KEY |
+| created_at | TIMESTAMPTZ |
+| expires_at | TIMESTAMPTZ |
 
 Связи:
 
@@ -166,34 +172,40 @@ expires_at | TIMESTAMPTZ |
 ## 8. Требования к хранению данных
 
 ### 8.1. Система управления базами данных
+
 Реляционная СУБД **PostgreSQL**; схема создаётся версионированными **миграциями**
 
 ### 8.2. Типы данных
+
 - Денежные суммы — `numeric(12,2)`;
 - количества и остаток — `int`;
 - временные метки — `timestamptz` (`created_at`);
 - Идентификаторы и внешние ключи - `int`.
 
 ### 8.3. Ограничения и индексы
+
 - Все внешние ключи — `ON DELETE RESTRICT` (физического удаления музыкантов и пластинок нет, история движений неуничтожима).
 - Архивация хранится как `archived_at timestamptz NULL` в `musicians` и `records`; активные записи — `archived_at IS NULL`.
 - Уникальный индекс на `genres.name`; проверки `price > 0`, `stock >= 0`, `quantity > 0`.
 
 ### 8.4. Конфигурация
+
 Конфигурация подключения — через переменные окружения; **секреты и локальные файлы не попадают в репозиторий** (`.env` в `.gitignore`, шаблон в `.env.example`).
 
 ## 9. Технологии
 
 HTTP API на Node.js + Express, доступ к БД и миграции — Knex, валидация тела/параметров — zod, тесты — Jest + Supertest. Единый интерфейс команд через `make` (setup/run/test/quality/migrate/verify).
 
-## 10.	Требования безопасности
+## 10. Требования безопасности
+
 Безопасность функционирования ГУ в обеспечивается выполнением требований к ПОИБ ГУ и услугам по предоставлению инфраструктуры для развертывания ГУ, которые должны быть выполнены в отдельных работах за рамками работ по настоящему техническому заданию.
 
- ## 11.	Требования к надежности
+## 11. Требования к надежности
+
 Должен быть обеспечен отказоустойчивый режим функционирования при круглосуточном режиме работы.
 Среднее время восстановления работоспособности компонентов системы не должно превышать 4 часов. В указанное время входит развертывание и настройка специального программного обеспечения на выделенной инфраструктуре, восстановление данных с использованием средств резервного копирования, антивирусная проверка. В указанное время не входит анализ защищенности и выявление причин реализовавшегося деструктивного информационного воздействия.
 В системе должно быть предусмотрено:
+
 - контроль целостности данных на уровне СУБД;
 - сохранение целостности данных при нештатном завершении программы (отказ рабочей станции и т.п.);
 - сохранение работоспособности программного обеспечения при вводе некорректного набора данных оператором.
-

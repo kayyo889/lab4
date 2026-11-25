@@ -4,3 +4,5 @@ package-lock.json
 
 # исходные материалы курса - не форматируем
 tasks/
+.ci-cache/
+reports/

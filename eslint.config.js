@@ -50,7 +50,7 @@ const browserGlobals = {
 module.exports = [
   { ignores: ['node_modules/', 'coverage/'] },
   js.configs.recommended,
-  
+
   {
     files: ['**/*.js'],
     languageOptions: {
@@ -64,12 +64,12 @@ module.exports = [
       'no-console': 'off',
     },
   },
-  
+
   {
     files: ['tests/**/*.js'],
     languageOptions: { globals: { ...nodeGlobals, ...jestGlobals } },
   },
-  
+
   {
     files: ['public/**/*.js'],
     languageOptions: {

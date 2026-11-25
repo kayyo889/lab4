@@ -1,7 +1,6 @@
 const { randomBytes, createHash } = require('node:crypto');
 
 const db = require('./db');
-const config = require('./config');
 const { serializeCookie } = require('./utils/cookies');
 
 const COOKIE_NAME = 'session';
@@ -51,12 +50,9 @@ const sessionCookie = (token) =>
   serializeCookie(COOKIE_NAME, token, {
     maxAge: TTL_SECONDS,
     secure: false,
-    //secure: config.env === 'production',
   });
 
-const clearedCookie = () =>
-  serializeCookie(COOKIE_NAME, '', { maxAge: 0, secure: false });
-  //serializeCookie(COOKIE_NAME, '', { maxAge: 0, secure: config.env === 'production' });
+const clearedCookie = () => serializeCookie(COOKIE_NAME, '', { maxAge: 0, secure: false });
 
 module.exports = {
   COOKIE_NAME,
